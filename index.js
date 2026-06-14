@@ -5,41 +5,50 @@ app.use(cors());
 app.use(express.json());
 
 app.post('/send', (req, res) => {
-const { communications, campaignId, callbackBaseUrl } = req.body;
-res.json({ success: true, acceptedAt: new Date().toISOString() });
-communications?.forEach(comm => {
-const delay = Math.random() * 4000 + 1000;
-setTimeout(() => {
-const rand = Math.random();
-let status = rand < 0.05 ? 'failed' : 'delivered';
-let openedAt = null;
-let clickedAt = null;
-if (status === 'delivered' && Math.random() < 0.6) {
-status = 'opened';
-openedAt = new Date().toISOString();
-if (Math.random() < 0.4) {
-status = 'clicked';
-clickedAt = new Date().toISOString();
-}
-}
-const callbackUrl = ${callbackBaseUrl || 'http://localhost:3000'}/api/receipts;
-fetch(`${callbackBaseUrl || 'http://localhost:3000'}/api/receipts`, {
+  const { communications, campaignId, callbackBaseUrl } = req.body;
+  
+  // Instantly acknowledge receipt back to the CRM main pipeline
+  res.json({ success: true, acceptedAt: new Date().toISOString() });
+  
+  // Background processing asynchronously simulates user engagement metrics
+  communications.forEach(comm => {
+    const delay = Math.random() * 4000 + 1000; // 1-5 second random propagation latency
+    setTimeout(() => {
+      const rand = Math.random();
+      let status = rand < 0.05 ? 'failed' : 'delivered';
+      let openedAt = null;
+      let clickedAt = null;
+      
+      if (status === 'delivered' && Math.random() < 0.6) {
+        status = 'opened';
+        openedAt = new Date().toISOString();
+        if (Math.random() < 0.4) {
+          status = 'clicked';
+          clickedAt = new Date().toISOString();
+        }
+      }
+      
+      // FIX FOR LINE 25: Added proper backticks for string interpolation
+      const callbackUrl = `${callbackBaseUrl || 'http://localhost:3000'}/api/receipts`;
+      
+      // Fire webhook callback back to AIRA CRM application telemetry engine
+      fetch(callbackUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-communicationId: comm.communicationId,
-customerId: comm.customerId,
-campaignId,
-status,
-channel: comm.channel,
-openedAt,
-clickedAt,
-timestamp: new Date().toISOString()
-})
-}).catch(err => console.error('Webhook failed:', err.message));
-}, delay);
-});
+          communicationId: comm.communicationId,
+          customerId: comm.customerId,
+          campaignId,
+          status,
+          channel: comm.channel,
+          openedAt,
+          clickedAt,
+          timestamp: new Date().toISOString()
+        })
+      }).catch(err => console.error("Webhook Delivery Failed:", err.message));
+    }, delay);
+  });
 });
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(Channel service online on port ${PORT}));
+app.listen(PORT, () => console.log(`🚀 Telemetry Channel Simulation Engine online on port ${PORT}`));
