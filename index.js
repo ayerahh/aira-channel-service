@@ -23,10 +23,10 @@ clickedAt = new Date().toISOString();
 }
 }
 const callbackUrl = ${callbackBaseUrl || 'http://localhost:3000'}/api/receipts;
-fetch(callbackUrl, {
-method: 'POST',
-headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify({
+fetch(`${callbackBaseUrl || 'http://localhost:3000'}/api/receipts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
 communicationId: comm.communicationId,
 customerId: comm.customerId,
 campaignId,
